@@ -5,16 +5,40 @@
 #include <chrono>
 #include <thread>
 #include <string>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <sys/ioctl.h>
+#include <unistd.h>
+#endif
 
 namespace fs = std::filesystem;
 
 char pixelToASCII(int pixelIntensity) {
-    static const std::string ASCII_CHARS = ".%*+=-:- ";
+    static const std::string ASCII_CHARS = ".%#*+=-:_^- ";
     return ASCII_CHARS[pixelIntensity * ASCII_CHARS.size() / 256];
 }
 
 void clearScreen() {
-    std::cout << "\033[2J\033[H";
+#ifdef _WIN32
+    system("cls");  // Clear screen command for Windows
+#else
+    std::cout << "\033[2J\033[H";  // ANSI escape codes for Unix/Linux
+#endif
+}
+
+void getTerminalSize(int& width, int& height) {
+#ifdef _WIN32
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+    height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+#else
+    struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+    width = w.ws_col;
+    height = w.ws_row;
+#endif
 }
 
 void displayFrame(const std::string& framePath, int frameRate) {
@@ -69,11 +93,10 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Calculate optimal width and height based on your terminal size
-    int terminalWidth = 200;  // Example, adjust to your terminal's width capacity
-    int terminalHeight = 60;  // Example, adjust to your terminal's height capacity
+    int terminalWidth, terminalHeight;
+    getTerminalSize(terminalWidth, terminalHeight);
     std::string videoPath = argv[1];
-    processVideo(videoPath, terminalWidth, terminalHeight);
+    processVideo(videoPath, terminalWidth, terminalHeight);  // Divided by 2 to adjust for character height
     displayFrame("./output/frame", 24);  // Example frame rate
     return 0;
 }
