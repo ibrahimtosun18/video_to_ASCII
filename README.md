@@ -52,6 +52,8 @@ For further guidance or any queries, feel free to contact:
 - Ibrahim - [ibrahim.tsn18@gmail.com](mailto:ibrahim.tsn18@gmail.com)
 
 
+## License
 
+This project is licensed under the [MIT License](LICENSE).
 
       
